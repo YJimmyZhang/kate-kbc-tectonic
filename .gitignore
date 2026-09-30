@@ -1,0 +1,4 @@
+*.p8
+.env
+__pycache__/
+.pytest_cache/

@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Security: no network access, no external scripts, no forms. Everything runs locally on synthetic data. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Personal Kate: the right guidance for every KBC customer (demo)</title>
+<style>
+:root{
+  --kbc:#3DB4EA; --fab:#2196E0; --link:#38A8E8;
+  --bg:#0E0E10; --card:#1C1C1F; --card-2:#26262A; --hair:#2C2C31;
+  --txt:#F5F5F7; --muted:#A1A1A8; --ok:#34C27A; --warn:#F0A04B;
+  --sans: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --s:1; --s4:.8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:radial-gradient(1100px 700px at 62% 45%,rgba(61,180,234,.14),transparent 62%),#08090B;color:#fff;overflow:hidden}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit;text-align:inherit}
+button:focus-visible{outline:2px solid var(--kbc);outline-offset:2px}
+
+/* ---------- Demo controls (press H to hide before recording) ---------- */
+#controls{position:fixed;top:0;left:0;right:0;height:52px;display:flex;align-items:center;gap:4px;padding:0 14px;background:rgba(4,5,7,.9);border-bottom:1px solid rgba(255,255,255,.08);z-index:50;font-size:13px;white-space:nowrap;overflow-x:auto}
+body.no-controls #controls{display:none}
+.ctl-group{display:flex;gap:4px;align-items:center;margin-right:12px}
+.ctl-label{color:#8E8E96;margin-right:4px}
+.ctl{padding:6px 10px;border-radius:6px;background:rgba(255,255,255,.07);color:#E0E0E6}
+.ctl[aria-pressed="true"]{background:var(--kbc);color:#04263A;font-weight:600}
+.ctl-hint{margin-left:auto;color:#6E6E78;padding-left:12px}
+
+/* ---------- Stage & scenes ---------- */
+#stage{position:absolute;left:0;right:0;bottom:0;top:52px}
+body.no-controls #stage{top:0}
+.scene{position:absolute;inset:0;display:none}
+.scene.active{display:flex}
+
+#scene-intro{align-items:center;padding:0 9vw}
+.big{font-size:clamp(44px,6vw,92px);line-height:1.02;font-weight:700;letter-spacing:-.03em;max-width:15ch}
+.sub{margin-top:28px;font-size:clamp(18px,1.7vw,24px);line-height:1.5;color:#C7C7CF;max-width:44ch}
+.team{margin-top:44px;color:#7C7C86;font-size:15px}
+
+/* ---------- Phone shell ---------- */
+.phone{position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:var(--bg);color:var(--txt);
+  box-shadow:0 0 0 11px #040405,0 0 0 12px #3A3A40,0 40px 90px rgba(0,0,0,.6);transform-origin:top left;--fs:1}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:122px;height:34px;border-radius:20px;background:#000;z-index:40}
+.status{position:absolute;top:0;left:0;right:0;height:54px;display:flex;justify-content:space-between;align-items:center;padding:6px 30px 0 40px;font-size:16px;font-weight:650;z-index:12;color:#fff}
+.status svg{display:block}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#fff;z-index:30;opacity:.9}
+
+/* ---------- Scene 2: lock screens ---------- */
+#scene-lock{align-items:center;justify-content:center;padding:0 3vw}
+.lock-col{display:flex;flex-direction:column;align-items:center;gap:22px}
+.lock-wrap{width:calc(390px * var(--s4));height:calc(844px * var(--s4))}
+.lock-wrap .phone{transform:scale(var(--s4))}
+.lock-label{text-align:center;width:calc(390px * var(--s4));min-width:220px}
+.lock-label b{display:block;font-size:20px;font-weight:650}
+.lock-label .ll-sub{display:block;color:#9A9AA4;font-size:14px;margin-top:5px;line-height:1.4}
+.lock-row{display:flex;gap:36px;align-items:flex-start}
+.lock{background:var(--wall)}
+.wall-lotte{--wall:radial-gradient(90% 55% at 22% 28%,#E27D8E 0%,transparent 70%),radial-gradient(80% 60% at 88% 72%,#E9A55B 0%,transparent 68%),linear-gradient(180deg,#43293F,#161015)}
+.wall-ahmed{--wall:radial-gradient(90% 55% at 25% 25%,#5E9C7A 0%,transparent 70%),radial-gradient(80% 60% at 85% 75%,#2F6E73 0%,transparent 70%),linear-gradient(180deg,#1F3A33,#0E1614)}
+.wall-marc{--wall:radial-gradient(90% 55% at 25% 25%,#5A7EA6 0%,transparent 70%),radial-gradient(80% 60% at 85% 75%,#2D4460 0%,transparent 70%),linear-gradient(180deg,#1E2A3A,#0C1118)}
+.wall-anna{--wall:radial-gradient(90% 55% at 25% 25%,#9C8AD0 0%,transparent 70%),radial-gradient(80% 60% at 85% 75%,#C98FB5 0%,transparent 68%),linear-gradient(180deg,#2E2745,#120F1A)}
+.lock-date{position:absolute;top:92px;left:0;right:0;text-align:center;font-size:21px;font-weight:600;color:rgba(255,255,255,.88)}
+.lock-time{position:absolute;top:112px;left:0;right:0;text-align:center;font-size:98px;font-weight:650;letter-spacing:-2px;color:rgba(255,255,255,.9);font-variant-numeric:tabular-nums}
+.notif{position:absolute;left:12px;right:12px;bottom:132px;display:flex;gap:12px;align-items:flex-start;padding:13px 14px 14px;border-radius:24px;
+  background:rgba(58,58,62,.6);-webkit-backdrop-filter:blur(26px) saturate(1.5);backdrop-filter:blur(26px) saturate(1.5);color:#fff;
+  opacity:0;transform:translateY(26px) scale(.97);transition:opacity .5s ease,transform .6s cubic-bezier(.2,.9,.2,1)}
+.notif.show{opacity:1;transform:none}
+.notif:hover{background:rgba(72,72,78,.66)}
+.app-ico{width:40px;height:40px;border-radius:10px;background:linear-gradient(160deg,#66CCF5,#2FA7E4);display:grid;place-items:center;flex:0 0 40px;margin-top:2px}
+.n-main{flex:1;min-width:0}
+.n-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.n-title{font-weight:650;font-size:16px}
+.n-time{color:rgba(235,235,245,.6);font-size:14px}
+.n-body{font-size:15px;line-height:1.3;margin-top:1px}
+.lk-btn{position:absolute;bottom:48px;width:50px;height:50px;border-radius:50%;background:rgba(30,30,34,.45);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);display:grid;place-items:center;color:#fff}
+
+/* ---------- Scenes 3 and 4: the app ---------- */
+#scene-app{align-items:center;justify-content:center;gap:5.5vw;padding:0 4vw}
+.caption{flex:0 0 330px;color:#E0E0E6}
+.cap-step{color:#8E8E96;font-size:15px}
+.cap-name{font-size:46px;line-height:1.05;margin-top:6px;font-weight:700;letter-spacing:-.02em;color:#fff}
+.cap-meta{margin-top:10px;color:#A9A9B2;font-size:16px;line-height:1.4}
+.cap-dl{margin-top:30px;display:grid;grid-template-columns:100px 1fr;row-gap:14px;column-gap:14px;font-size:15px;line-height:1.35}
+.cap-dl dt{color:#8E8E96}
+.cap-dl dd{color:#fff;font-weight:600}
+.cap-dl dd small{display:block;font-weight:400;color:#A9A9B2;font-size:13px;margin-top:2px}
+.cap-event{margin-top:28px;display:inline-block;padding:9px 12px;border-radius:10px;background:rgba(61,180,234,.15);color:#BDE6FA;font-size:14px;line-height:1.4}
+
+.app-wrap{flex:0 0 auto;width:calc(390px * var(--s));height:calc(844px * var(--s))}
+#app-phone{transform:scale(var(--s))}
+#app-phone[data-size=large]{--fs:1.1}
+.status.solid{background:var(--bg)}
+.screen{position:absolute;inset:0;transition:transform .38s cubic-bezier(.2,.8,.2,1);background:var(--bg)}
+.screen-rec{transform:translateX(100%);z-index:8}
+#app-phone[data-screen=rec] .screen-rec{transform:none}
+#app-phone[data-screen=rec] .screen-home{transform:translateX(-22%)}
+.scroll{position:absolute;inset:0;overflow-y:auto;padding:58px 16px 130px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+
+/* home */
+.k-top{display:flex;align-items:center;gap:8px;margin-top:8px}
+.k-circ{width:44px;height:44px;border-radius:50%;background:var(--card);border:1px solid var(--hair);display:grid;place-items:center;flex:0 0 44px;position:relative;color:#fff}
+.k-circ .red{position:absolute;top:8px;right:9px;width:10px;height:10px;border-radius:50%;background:#FF453A}
+.k-search{flex:1;min-width:0;height:44px;border-radius:22px;background:var(--card);border:1px solid var(--hair);display:flex;align-items:center;gap:7px;padding:0 11px;color:#D1D1D6;font-size:13.5px}
+.k-search .ph{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kate-badge{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#fff;font-size:14.5px;flex:0 0 auto}
+.kate-dot{width:18px;height:18px;border-radius:50%;background:linear-gradient(160deg,#6FD0F6,#2FA7E4);display:inline-grid;place-items:center;flex:0 0 18px}
+.k-chips{display:flex;gap:8px;margin-top:18px}
+.chip{height:38px;border-radius:19px;background:#1F2327;display:flex;align-items:center;gap:6px;padding:0 13px;font-size:15px;color:#E5E5EA}
+.chip.on{background:#EDEDF0;color:#111;padding:0 13px}
+.k-accts{display:flex;gap:10px;margin:18px -16px 0;padding:0 16px;overflow:hidden}
+.acc{flex:0 0 150px;border-radius:16px;overflow:hidden;background:var(--card)}
+.acc-top{height:108px;display:grid;place-items:center;color:#0F3B53;
+  background:linear-gradient(128deg,rgba(255,255,255,.22) 0 30%,transparent 30%),linear-gradient(232deg,rgba(255,255,255,.14) 0 36%,transparent 36%),linear-gradient(160deg,#66CCF5,#36AEE7)}
+.acc-bot{padding:10px 12px 12px}
+.acc-name{font-size:calc(12.5px * var(--fs));color:var(--muted)}
+.acc-amt{font-size:calc(15px * var(--fs));font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.show-pay{display:flex;align-items:center;gap:10px;color:var(--link);font-size:14px;font-weight:600;margin:16px 0 0 20px}
+.k-sec{display:flex;justify-content:space-between;align-items:baseline;margin:26px 2px 12px}
+.k-sec h2{font-size:calc(21px * var(--fs));font-weight:500}
+.k-sec span{color:var(--link);font-size:14.5px;font-weight:650}
+.k-card{position:relative;display:flex;gap:14px;width:100%;background:var(--card);border-radius:16px;padding:16px 40px 16px 16px;margin-bottom:12px;color:var(--txt)}
+.k-card .ico{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;color:#fff}
+.k-card .x{position:absolute;right:12px;top:12px;width:22px;height:22px;border-radius:50%;background:#2C2C31;display:grid;place-items:center;color:#A1A1A8;font-size:11px}
+.k-txt{display:block;flex:1}
+.k-txt p{font-size:calc(15.5px * var(--fs));line-height:1.4;color:#EDEDF0}
+.k-lbl{display:flex;align-items:center;gap:6px;font-weight:700;font-size:calc(14px * var(--fs));margin-bottom:5px}
+.k-card.kate{border:1px solid rgba(61,180,234,.6);cursor:pointer}
+.k-card.kate:hover{background:#212125}
+.k-title{display:block;font-weight:700;font-size:calc(16.5px * var(--fs));line-height:1.3}
+.k-teaser{display:block;font-size:calc(15px * var(--fs));line-height:1.4;color:#D5D5DB;margin-top:4px}
+.k-more{display:inline-flex;align-items:center;gap:4px;margin-top:10px;color:var(--link);font-weight:650;font-size:calc(14px * var(--fs))}
+.k-card.pulse{animation:kpulse 1.7s ease 2}
+@keyframes kpulse{0%{box-shadow:0 0 0 0 rgba(61,180,234,.75)}100%{box-shadow:0 0 0 16px rgba(61,180,234,0)}}
+.fab{position:absolute;right:18px;bottom:110px;width:62px;height:62px;border-radius:50%;background:var(--fab);display:grid;place-items:center;color:#fff;box-shadow:0 8px 22px rgba(0,0,0,.45);z-index:6}
+.k-nav{position:absolute;left:14px;right:14px;bottom:26px;height:72px;border-radius:36px;background:rgba(34,34,38,.95);border:1px solid #34343A;display:flex;align-items:center;padding:0 6px;z-index:6}
+.k-nav span{flex:1;height:60px;border-radius:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12.5px;color:#D1D1D6}
+.k-nav span.on{background:#3A3A40;color:#fff}
+
+/* recommendation screen */
+.r-head{display:flex;align-items:center;gap:12px;margin:8px 0 16px}
+.r-back{width:44px;height:44px;border-radius:50%;background:var(--card);border:1px solid var(--hair);display:grid;place-items:center;flex:0 0 44px}
+.r-head h1{font-size:18px;font-weight:650}
+.r-hero{position:relative;height:150px;border-radius:20px;overflow:hidden;padding:14px;display:flex;align-items:flex-end;color:#0F3B53;
+  background:linear-gradient(128deg,rgba(255,255,255,.22) 0 30%,transparent 30%),linear-gradient(232deg,rgba(255,255,255,.14) 0 40%,transparent 40%),linear-gradient(160deg,#66CCF5,#36AEE7)}
+.r-hero .hero-ico{position:absolute;right:26px;top:24px;opacity:.95}
+.kate-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(14,14,16,.82);color:#fff;border-radius:999px;padding:6px 11px 6px 7px;font-size:13.5px;font-weight:650}
+.r-title{font-size:calc(24px * var(--fs));font-weight:700;line-height:1.2;margin-top:18px;letter-spacing:-.01em}
+.r-body{font-size:calc(16px * var(--fs));line-height:1.5;color:#D8D8DE;margin-top:10px}
+.r-figs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.r-fig{background:var(--card);border-radius:12px;padding:10px}
+.r-fig b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.r-fig span{font-size:12px;color:var(--muted)}
+.r-note{font-size:12px;color:var(--muted);margin-top:8px}
+.r-prod{background:var(--card);border-radius:16px;padding:14px 16px;margin-top:16px}
+.r-prod-top{display:flex;justify-content:space-between;gap:10px;font-size:calc(15px * var(--fs))}
+.r-prod-top span:last-child{color:var(--muted);white-space:nowrap}
+.sri{display:flex;gap:5px;margin-top:12px}
+.sri i{flex:1;height:28px;border-radius:7px;background:#2C2C31;display:grid;place-items:center;font-style:normal;font-size:12.5px;color:#7C7C86}
+.sri i.fill{background:rgba(61,180,234,.22);color:#BDE6FA}
+.sri i.cur{background:var(--kbc);color:#04263A;font-weight:750}
+.sri-cap{font-size:calc(12.5px * var(--fs));color:var(--muted);margin-top:9px;line-height:1.4}
+.r-cta{display:block;width:100%;margin-top:18px;height:52px;border-radius:26px;background:var(--fab);color:#fff;font-weight:650;font-size:calc(16px * var(--fs));text-align:center}
+.r-cta2{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;height:50px;border-radius:25px;border:1px solid #3A3A40;color:#fff;font-weight:600;font-size:calc(15px * var(--fs))}
+.r-sec{margin-top:28px}
+.r-sec h2{font-size:calc(18px * var(--fs));font-weight:650;margin-bottom:10px}
+.r-box{background:var(--card);border-radius:16px;padding:4px 16px}
+.kv{display:flex;justify-content:space-between;gap:14px;font-size:calc(13.5px * var(--fs));padding:10px 0;line-height:1.35;border-top:1px solid #2A2A2F}
+.kv:first-child{border-top:0}
+.kv > span:first-child{color:var(--muted);flex:0 0 auto}
+.kv > span:last-child{text-align:right;font-weight:600}
+.kv.new > span:last-child{color:#BDE6FA}
+.tag{font-size:10.5px;font-weight:750;background:var(--kbc);color:#04263A;border-radius:5px;padding:1px 5px;margin-left:6px}
+.bar{height:6px;border-radius:3px;background:#2C2C31;margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--kbc);border-radius:3px}
+.meter{padding:10px 0;border-top:1px solid #2A2A2F}
+.meter .kv{border:0;padding:0}
+.reasons{list-style:none}
+.reasons li{position:relative;padding:10px 0 10px 26px;font-size:calc(14.5px * var(--fs));line-height:1.45;border-top:1px solid #2A2A2F}
+.reasons li:first-child{border-top:0}
+.reasons li::before{content:"";position:absolute;left:4px;top:17px;width:8px;height:8px;border-radius:50%;background:var(--kbc)}
+.suit{display:flex;gap:10px;font-size:calc(13.5px * var(--fs));padding:10px 0;line-height:1.4;border-top:1px solid #2A2A2F}
+.suit:first-child{border-top:0}
+.suit .ok{color:var(--ok);font-weight:800}
+.suit .no{color:var(--warn);font-weight:800}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0}
+.toggle-row b{font-size:calc(15px * var(--fs));font-weight:600}
+.toggle{width:50px;height:30px;border-radius:15px;background:#3A3A40;position:relative;transition:background .2s;flex:0 0 50px}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle[aria-checked=true]{background:var(--ok)}
+.toggle[aria-checked=true]::after{transform:translateX(20px)}
+.fine{font-size:calc(12px * var(--fs));color:var(--muted);line-height:1.45;margin-top:12px}
+
+/* pathways */
+.pw{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 3px;font-size:12.5px;font-weight:700;color:#111113;background:var(--pc);white-space:nowrap;line-height:1.2}
+.pw b{width:19px;height:19px;border-radius:50%;background:rgba(0,0,0,.18);display:inline-grid;place-items:center;font-size:11px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
+.strip{display:flex;gap:5px;justify-content:center;margin-top:14px}
+.strip i{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-style:normal;font-size:13px;font-weight:700;background:rgba(255,255,255,.07);color:#55555E}
+.strip i.on{background:var(--pc);color:#111113}
+.strip i.main{outline:2px solid #fff;outline-offset:2px}
+.caption .strip,.caption .chips{justify-content:flex-start}
+.cap-pw-t{margin-top:26px;color:#8E8E96;font-size:15px}
+.pw-area{opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .6s ease}
+.lock-col.shown .pw-area{opacity:1;transform:none}
+.k-card .pw{margin:2px 0 7px}
+.r-chip{margin-top:16px}
+.r-chip + .r-title{margin-top:10px}
+.r-keep{font-size:calc(12.5px * var(--fs));color:var(--muted);margin-top:12px;line-height:1.45;padding-top:10px;border-top:1px solid #2A2A2F}
+.pw-row{display:flex;gap:12px;padding:11px 0;border-top:1px solid #2A2A2F;align-items:flex-start}
+.pw-row:first-child{border-top:0}
+.pw-n{width:28px;height:28px;border-radius:8px;flex:0 0 28px;display:grid;place-items:center;font-size:13px;font-weight:750;background:#2C2C31;color:#6E6E78}
+.pw-row.on .pw-n,.pw-row.main .pw-n{background:var(--pc);color:#111113}
+.pw-row.main .pw-n{outline:2px solid #fff;outline-offset:2px}
+.pw-main{flex:1;min-width:0}
+.pw-name{display:block;font-size:calc(14.5px * var(--fs));font-weight:650;color:#8A8A94}
+.pw-row.on .pw-name,.pw-row.main .pw-name{color:#fff}
+.pw-st{display:block;font-size:calc(12.5px * var(--fs));margin-top:2px;color:#7C7C86;line-height:1.4}
+.pw-row.main .pw-st,.pw-row.on .pw-st{color:var(--pc);font-weight:650}
+.pw-row.limit .pw-st{color:var(--warn)}
+.pw-keep{display:block;font-size:calc(12px * var(--fs));color:var(--muted);margin-top:3px;line-height:1.4}
+
+@media (max-width:1000px){.caption{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="controls" role="toolbar" aria-label="Demo controls">
+  <div class="ctl-group"><span class="ctl-label">Stage</span>
+    <button class="ctl" type="button" data-scene="0">1 Intro</button>
+    <button class="ctl" type="button" data-scene="1">2 Notifications</button>
+    <button class="ctl" type="button" data-scene="2">3 App</button>
+    <button class="ctl" type="button" data-scene="3">4 Recommendation</button>
+  </div>
+  <div class="ctl-group" id="ctl-customers"><span class="ctl-label">Customer</span></div>
+  <div class="ctl-group">
+    <button class="ctl" type="button" id="btn-replay">Replay notifications</button>
+    <button class="ctl" type="button" id="btn-personal" aria-pressed="true">Personalised</button>
+  </div>
+  <span class="ctl-hint">Arrows: stages. 1 to 4: customer. Enter: open. P: personalised. H: hide bar.</span>
+</div>
+
+<main id="stage">
+  <!-- Stage 1: intro -->
+  <section class="scene" id="scene-intro" aria-label="Intro">
+    <div>
+      <h1 class="big">Same bank. 2.3 million different customers.</h1>
+      <p class="sub">Kate reads the signals customers already share with KBC and adapts every suggestion: what she offers, how she says it, and when.</p>
+      <p class="team" id="team-intro"></p>
+    </div>
+  </section>
+
+  <!-- Stage 2: lock screens with Kate notifications -->
+  <section class="scene" id="scene-lock" aria-label="Notifications"></section>
+
+  <!-- Stages 3 and 4: the app -->
+  <section class="scene" id="scene-app" aria-label="App">
+    <aside class="caption">
+      <p class="cap-step" id="cap-step"></p>
+      <h2 class="cap-name" id="cap-name"></h2>
+      <p class="cap-meta" id="cap-meta"></p>
+      <dl class="cap-dl" id="cap-dl"></dl>
+      <div id="cap-pw"></div>
+      <p class="cap-event" id="cap-event"></p>
+    </aside>
+    <div class="app-wrap">
+      <div class="phone" id="app-phone" data-screen="home">
+        <div class="island"></div>
+        <div class="status solid"><span id="st-time">9:41</span><span id="st-icons"></span></div>
+        <div class="screen screen-home">
+          <div class="scroll" id="home"></div>
+          <button class="fab" type="button" aria-label="Transfer" id="fab"></button>
+          <nav class="k-nav" id="k-nav" aria-label="App navigation"></nav>
+        </div>
+        <div class="screen screen-rec"><div class="scroll" id="rec"></div></div>
+        <div class="homebar"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const TEAM_NAME = "Team Compass"; // <- put your team name here
+
+/* =====================================================================
+   0. HELPERS
+   ===================================================================== */
+const nf0 = new Intl.NumberFormat("nl-BE", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("nl-BE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const euros = n => nf0.format(Math.round(n)) + " euros";      // in sentences: "2.500 euros"
+const bal = n => nf2.format(n) + " EUR";                       // balances: "1.284,36 EUR"
+const dec = x => x.toFixed(1).replace(".", ",");
+const clamp = (x, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, x));
+// All dynamic text is escaped before it is placed in the page.
+const esc = v => String(v).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+
+const P = {
+  spark: '<path fill="currentColor" stroke="none" d="M12 2c.6 4.6 2.4 7.4 10 10-7.6 2.6-9.4 5.4-10 10-.6-4.6-2.4-7.4-10-10 7.6-2.6 9.4-5.4 10-10z"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  bell: '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  wallet: '<path d="M19 7V5a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 6v12a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-3"/>',
+  home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  sign: '<path d="M12 3v18"/><path d="M5 6h11l3 3-3 3H5z"/>',
+  piggy: '<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/>',
+  trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  list: '<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+  layers: '<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
+  swap: '<path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="m17 20 4-4-4-4"/><path d="M21 16H7"/>',
+  down: '<path d="m6 9 6 6 6-6"/>',
+  back: '<path d="m15 18-6-6 6-6"/>',
+  right: '<path d="m9 18 6-6-6-6"/>',
+  mail: '<rect x="3" y="6" width="18" height="13" rx="1"/><path d="m3 7 9 7 9-7"/><path d="M12 2v3"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',
+  child: '<circle cx="12" cy="7" r="4"/><path d="M5 21c0-3.9 3.1-7 7-7s7 3.1 7 7"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  landmark: '<path d="M3 21h18"/><path d="M5 21V10M9 21V10M15 21V10M19 21V10"/><path d="M2 10 12 4l10 6z"/>',
+  office: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/><path d="M10 21v-3h4v3"/>',
+  city: '<path d="M3 21h18"/><path d="M4 21V9l6-4 6 4v12"/><path d="M16 11h4v10"/><path d="M8 13h4M8 17h4"/>',
+  umbrella: '<path d="M2 12a10 10 0 0 1 20 0z"/><path d="M12 12v7a2 2 0 0 0 4 0"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/>',
+  chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  torch: '<path d="M8 2h8v5l-2 3v11h-4V10L8 7z"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'
+};
+const icon = (name, size = 22, sw = 1.7) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name]}</svg>`;
+const STATUS_ICONS = '<svg width="72" height="13" viewBox="0 0 72 13" aria-hidden="true"><g fill="currentColor"><rect x="0" y="9" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="7" rx="1"/><rect x="10" y="3" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="13" rx="1"/><text x="22" y="11" font-size="11" font-weight="700" font-family="system-ui,sans-serif">5G</text><rect x="42" y="1" width="25" height="12" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".6"/><rect x="44" y="3" width="18" height="8" rx="2"/><rect x="68.5" y="5" width="2" height="4" rx="1" opacity=".6"/></g></svg>';
+
+/* =====================================================================
+   1. KATE'S 8 PATHWAYS + SYNTHETIC CUSTOMERS (no real customer data)
+   Risk numbers are indicative, on the 1-7 scale, for this prototype.
+   ===================================================================== */
+const PATHWAYS = [
+  { n: 1, key: "cash",       name: "Accessible cash",      need: "Emergency buffer or money needed soon",        product: "KBC Savings Account",                                   risk: 1,    kind: "Savings",   color: "#5ED3A2", icon: "piggy",    boundary: "Do not lock up money needed for near-term expenses." },
+  { n: 2, key: "gov",        name: "Government bonds",     need: "Income over a known horizon",                  product: "Government bonds via Bolero",                           risk: 2,    kind: "Investing", color: "#5DA9FF", icon: "landmark", boundary: "Price can fall if sold before maturity." },
+  { n: 3, key: "corp",       name: "Corporate bonds",      need: "Income while accepting issuer risk",           product: "Corporate bonds via Bolero",                            risk: 3,    kind: "Investing", color: "#A98FFF", icon: "office",   boundary: "The issuer could fail to pay." },
+  { n: 4, key: "equity",     name: "Global equities",      need: "Long-term growth",                             product: "Diversified equity fund from KBC's fund range",         risk: 4,    kind: "Investing", color: "#FFB23E", icon: "trend",    boundary: "Value can fall; check the specific fund's holdings." },
+  { n: 5, key: "realestate", name: "Real-estate exposure", need: "Property-linked investments",                  product: "Listed real-estate share via Bolero, subject to availability", risk: 5, kind: "Investing", color: "#FF7EA8", icon: "city", boundary: "A single share is not diversified property exposure." },
+  { n: 6, key: "homeins",    name: "Home protection",      need: "Protect a home and its contents",              product: "KBC Home Insurance",                                    risk: null, kind: "Insurance", color: "#3FD0D4", icon: "home",     boundary: "Cover and exclusions depend on the policy." },
+  { n: 7, key: "loanins",    name: "Mortgage protection",  need: "Protect co-borrowers or family if a borrower dies", product: "KBC Comfort Loan Balance Insurance",               risk: null, kind: "Insurance", color: "#D5E86A", icon: "umbrella", boundary: "Linked to the outstanding loan and the agreed cover percentage." },
+  { n: 8, key: "mortgage",   name: "Home financing",       need: "Financing for a home purchase or build",       product: "KBC Mortgage Loan",                                     risk: null, kind: "Loan",      color: "#FF9466", icon: "key",      boundary: "Subject to assessment and approval; this prototype cannot promise eligibility or a rate." }
+];
+const PW = Object.fromEntries(PATHWAYS.map(p => [p.key, p]));
+
+const EVENT_INFO = {
+  home:    { label: "Home purchase", detail: "Mortgage since 2025" },
+  raise:   { label: "Salary change", detail: "About 260 euros more a month" },
+  child:   { label: "New child", detail: "Birth allowance and baby-store purchases" },
+  bonus:   { label: "One-off deposit", detail: "15.000 euros bonus" },
+  pension: { label: "Pension date", detail: "Confirmed, about 2 years away" }
+};
+
+const QLABEL = { 1: "Defensive (1 of 5)", 2: "Moderately defensive (2 of 5)", 3: "Neutral (3 of 5)", 4: "Dynamic (4 of 5)", 5: "Very dynamic (5 of 5)" };
+
+// Each customer: baseline signals + the life event that triggers Kate's notification.
+const CUSTOMERS = [
+  { id: "lotte", first: "Lotte", formalName: "Ms Janssens", age: 23, city: "Leuven", note: "First job, four months in",
+    signals: { income: 2150, incomeMonths: 4, expenses: 1750, savings: 2100, invested: 0, portfolioSri: 0, balance: 1284.36,
+      appSessionsWk: 11, avgSessionSec: 40, readsMarketNews: false, prefersAdvisor: false, questionnaire: 3, knowledge: 1,
+      products: ["Current account", "Credit card"], events: [], peakHour: "20:00" },
+    event: { id: "raise", apply: s => ({ ...s, income: 2410, balance: s.balance + 2410, events: [...s.events, "raise"] }) },
+    lock: { date: "Monday 26 October", clock: "20:01", time: "20:00",
+      body: "Nice, your salary went up this month 🎉 Want to let 50,00 euros a month work for you? Tap to see how." },
+    extra: null },
+
+  { id: "ahmed", first: "Ahmed", formalName: "Mr El Amrani", age: 34, city: "Ghent", note: "Bought a home last year",
+    signals: { income: 4200, incomeMonths: 60, expenses: 3100, savings: 15500, invested: 0, portfolioSri: 0, balance: 3412.8,
+      appSessionsWk: 6, avgSessionSec: 75, readsMarketNews: false, prefersAdvisor: false, questionnaire: 3, knowledge: 1,
+      products: ["Current account", "Mortgage", "Home insurance"], events: ["home"], peakHour: "21:00" },
+    event: { id: "child", apply: s => ({ ...s, income: s.income + 180, expenses: s.expenses + 350, balance: s.balance + 1200 - 312, events: [...s.events, "child"] }) },
+    lock: { date: "Saturday 17 October", clock: "10:02", time: "10:00",
+      body: "Congratulations on your little one! Whenever you're ready, Kate has put together a few things that help new parents." },
+    extra: null },
+
+  { id: "marc", first: "Marc", formalName: "Mr Verhoeven", age: 47, city: "Antwerp", note: "Engineer, experienced investor",
+    signals: { income: 6800, incomeMonths: 216, expenses: 3900, savings: 92000, invested: 18000, portfolioSri: 4, balance: 7920.15,
+      appSessionsWk: 14, avgSessionSec: 140, readsMarketNews: true, prefersAdvisor: false, questionnaire: 4, knowledge: 3,
+      products: ["Current account", "Savings account", "Investment account", "Home insurance"], events: [], peakHour: "07:30" },
+    event: { id: "bonus", apply: s => ({ ...s, savings: s.savings + 15000, events: [...s.events, "bonus"] }) },
+    lock: { date: "Wednesday 30 September", clock: "07:31", time: "07:30",
+      body: "A deposit of 15.000,00 euros was credited to your savings account. Kate has compared 3 options for this amount." },
+    extra: null },
+
+  { id: "anna", first: "Anna", formalName: "Mrs Peeters", age: 63, city: "Hasselt", note: "Retiring in about two years",
+    signals: { income: 3100, incomeMonths: 300, expenses: 2400, savings: 48000, invested: 95000, portfolioSri: 5, balance: 2650.4,
+      appSessionsWk: 1, avgSessionSec: 180, readsMarketNews: false, prefersAdvisor: true, questionnaire: 2, knowledge: 2,
+      products: ["Current account", "Savings account", "Investment account", "Home insurance"], events: [], peakHour: "10:00" },
+    event: { id: "pension", apply: s => ({ ...s, events: [...s.events, "pension"] }) },
+    lock: { date: "Tuesday 6 October", clock: "10:01", time: "10:00",
+      body: "Dear Mrs Peeters, your pension date has been confirmed. Your adviser Sofie can prepare a personal income overview for you." },
+    extra: { icon: "chat", title: "Your adviser, Sofie Maes", body: "Available Tuesday to Thursday, by phone or at the Hasselt branch." } }
+];
+
+/* =====================================================================
+   2. SIGNAL ENGINE: signals -> understanding (explainable scoring)
+   ===================================================================== */
+const TONES = {
+  casual:     { label: "Casual", desc: "short sentences, informal, one emoji at most" },
+  warm:       { label: "Warm", desc: "personal, reassuring, no pressure" },
+  analytical: { label: "Analytical", desc: "numbers first, compact, options" },
+  formal:     { label: "Formal and calm", desc: "polite form, larger text, adviser involved" }
+};
+
+const EVENT_MOMENT = {
+  raise:   "Day after payday, 20:00, when she usually opens the app",
+  child:   "Three weeks after the birth, Saturday morning",
+  bonus:   "Same morning, 07:30, with his market briefing",
+  pension: "Weekday morning, adviser follows up by phone"
+};
+
+function understand(c, s, trigger) {
+  const surplus = s.income - s.expenses;
+  const savingsRate = surplus / s.income;
+  const buffer = s.savings / s.expenses;                 // months of spending covered
+  const horizon = Math.max(1, 65 - c.age);               // years to retirement
+
+  // Risk capacity (0-100): can this person absorb losses?
+  const capacity = Math.round(100 * (
+      0.35 * clamp(buffer / 6) +
+      0.25 * clamp(s.incomeMonths / 24) +
+      0.25 * clamp(horizon / 30) +
+      0.15 * clamp(savingsRate / 0.25)));
+  const capacityLevel = capacity < 35 ? 1 : capacity < 50 ? 2 : capacity < 65 ? 3 : capacity < 80 ? 4 : 5;
+
+  // Risk limit = lower of what they want (questionnaire) and what they can bear (capacity)
+  const maxSri = Math.min(s.questionnaire, capacityLevel) + 1;   // mapped to the 1-7 risk scale
+
+  const knowledge = Math.min(100, s.knowledge * 25 + (s.readsMarketNews ? 15 : 0) + (s.invested > 0 ? 10 : 0));
+
+  const ev = s.events;
+  const lifeStage = c.age >= 58 ? "Pre-retirement"
+    : ev.includes("child") ? "Young family"
+    : (c.age < 28 && s.incomeMonths < 12) ? "Starter"
+    : ev.includes("home") ? "Settling in" : "Building wealth";
+
+  let tone, toneWhy;
+  if (c.age >= 60 || s.prefersAdvisor) { tone = "formal"; toneWhy = "60+, prefers talking to an adviser"; }
+  else if (knowledge >= 75 && s.readsMarketNews) { tone = "analytical"; toneWhy = "Experienced, reads market news"; }
+  else if (ev.includes("child") || ev.includes("home")) { tone = "warm"; toneWhy = "Big home or family step"; }
+  else { tone = "casual"; toneWhy = "Young, short and frequent app visits"; }
+
+  const channel = s.prefersAdvisor ? "Notification, then adviser call" : "Notification and in-app card";
+  const moment = EVENT_MOMENT[trigger] || `Around ${s.peakHour}, when they usually open the app`;
+
+  return { surplus, savingsRate, buffer, horizon, capacity, maxSri, knowledge, lifeStage, tone, toneWhy, channel, moment };
+}
+
+/* =====================================================================
+   3. NEXT BEST ACTIONS -> PATHWAYS, SUITABILITY, VOICE
+   Each action: when it applies, its priority, the pathway it leads to,
+   the reasons, and approved copy per voice. Pathways above the
+   customer's risk limit are never recommended.
+   ===================================================================== */
+const ACTIONS = [
+  { id: "phaseBonus", pathway: "equity", label: "Phase the bonus into equities", score: 95, when: (c, s) => s.events.includes("bonus"),
+    reasons: (c, s, u) => ["A one-off deposit of 15.000 euros arrived on your savings account", "Spreading the entry over 6 months lowers timing risk", `A diversified equity fund fits your risk limit of ${u.maxSri} of 7`],
+    copy: { analytical: () => ({ title: "15.000 euros received: 3 options",
+      body: "Invest in 6 monthly steps of 2.500 euros in a diversified equity fund to spread entry risk, invest it all now, or keep it in savings until you set a goal.",
+      figs: [["15.000", "Bonus (EUR)"], ["2.500", "Per step (EUR)"], ["6", "Monthly steps"]], cta: "Compare the 3 options" }) } },
+
+  { id: "pensionIncome", pathway: "gov", label: "Income plan with government bonds", score: 94, when: (c, s) => s.events.includes("pension"),
+    reasons: () => ["Your pension date was confirmed by the pension service", "Bonds that mature around your pension date match a known horizon", "You already work with your adviser Sofie"],
+    copy: { formal: c => ({ title: "Your income after retirement",
+      body: `Dear ${c.formalName}, your pension date has been confirmed. Sofie can prepare an overview of your expected income, including government bonds that mature in step with your retirement.`,
+      cta: "Request my income overview" }) } },
+
+  { id: "raisePlan", pathway: "equity", label: "Put part of the raise into equities", score: 92, when: (c, s) => s.events.includes("raise"),
+    reasons: (c, s, u) => ["Your salary went up by about 260 euros a month", `A higher savings rate lifted your risk capacity to ${u.capacity} of 100`, `Your risk limit is now ${u.maxSri} of 7, so a diversified equity fund fits`],
+    copy: { casual: () => ({ title: "Nice raise! Let some of it work for you",
+      body: "You now earn about 260 euros more a month. Keep most of it to enjoy. Put 50 euros a month into a diversified KBC equity fund and 80 euros extra into your savings account? You'll barely notice.",
+      cta: "Set it up in 2 taps" }) } },
+
+  { id: "eduPlan", pathway: "equity", icon: "child", label: "Monthly plan for the child", score: 90, when: (c, s) => s.events.includes("child"),
+    reasons: (c, s, u) => ["A birth allowance and baby-store purchases point to a new child", "An 18-year horizon suits long-term growth", `About ${euros(u.surplus)} is still left over each month`],
+    copy: { warm: () => ({ title: "A head start for your little one",
+      body: "Congratulations on your new family member. Setting aside 50 euros a month in a diversified equity fund until they turn 18 can build a meaningful fund. You can pause or change it at any time.",
+      cta: "Start a monthly plan" }) } },
+
+  { id: "derisk", pathway: "corp", label: "Lower risk with corporate bonds", score: 88, when: (c, s, u) => c.age >= 58 && s.portfolioSri > u.maxSri,
+    reasons: (c, s, u) => [`Your retirement is about ${65 - c.age} years away`, `Your investments carry risk ${s.portfolioSri} of 7, above your limit of ${u.maxSri}`, "Corporate bonds, risk 3 of 7, sit within your limit"],
+    copy: { formal: (c, s, u) => ({ title: "Preparing your investments for retirement",
+      body: `Part of your investments carries a higher risk (${s.portfolioSri} of 7) than your profile suggests (up to ${u.maxSri}). Sofie can discuss moving part of it to corporate bonds, at your own pace.`,
+      cta: "Book a call with Sofie" }) } },
+
+  { id: "idleCash", pathway: "gov", label: "Idle cash into government bonds", score: 86, when: (c, s, u) => u.buffer > 12 && u.knowledge >= 50 && c.age < 58,
+    calc: (c, s) => { const idle = s.savings - 6 * s.expenses; return { idle, loss: idle * (0.022 - 0.010) }; },
+    reasons: (c, s, u, p, x) => [`${euros(x.idle)} sits above a 6-month buffer`, "Government bonds put part of it on a known horizon", "Experienced investor, reads market news most mornings"],
+    copy: { analytical: (c, s, u, p, x) => ({ title: `${euros(x.idle)} above your buffer is idle`,
+      body: `At an assumed 1,0% savings rate and 2,2% inflation, it loses about ${euros(x.loss)} of purchasing power a year. Government bonds via Bolero could put part of it on a known horizon.`, cta: "See bond options" }) } },
+
+  { id: "buffer", pathway: "cash", label: "Build a safety net", score: 84, when: (c, s, u) => u.buffer < 3,
+    reasons: (c, s, u) => [`Savings cover ${dec(u.buffer)} months of spending, below the 3-month guideline`, `About ${euros(u.surplus)} is left over each month`, "A safety net comes before investing"],
+    copy: { casual: (c, s, u) => ({ title: `Your safety net: ${dec(u.buffer)} months`,
+      body: "Three months of spending is a comfortable cushion. Keep it in your KBC Savings Account, where you can reach it any time.", cta: "Adjust auto-save" }) } },
+
+  { id: "protect", pathway: "loanins", label: "Protect the mortgage", score: 80,
+    when: (c, s) => s.events.includes("child") && s.products.includes("Mortgage") && !s.products.includes("Balance insurance"),
+    reasons: () => ["A new child in the household", "A mortgage with no balance insurance on file", "Helps your family keep the home if something happens to you"],
+    copy: { warm: () => ({ title: "Is your family protected?",
+      body: "With a mortgage and a new baby, Comfort Loan Balance Insurance can help your family keep the home if something happens to you. A quick check takes three minutes.", cta: "Start the check" }) } },
+
+  { id: "realEstate", pathway: "realestate", label: "Add listed property exposure", score: 75, when: (c, s, u) => u.knowledge >= 75 && u.maxSri >= 5,
+    reasons: (c, s, u) => ["Experienced investor with a dynamic profile", "No property exposure in your portfolio yet", `Fits your risk limit of ${u.maxSri} of 7`],
+    copy: { analytical: () => ({ title: "Property exposure, listed",
+      body: "A listed real-estate share via Bolero adds property exposure to your portfolio. One share is not a diversified property portfolio.", cta: "Explore real-estate shares" }) } }
+];
+
+function recommend(c, s, u) {
+  const out = [], used = new Set();
+  ACTIONS.filter(a => a.when(c, s, u)).sort((a, b) => b.score - a.score).forEach(a => {
+    const p = PW[a.pathway];
+    if (out.length >= 3 || used.has(p.key)) return;       // one suggestion per pathway, at most 3
+    if (p.risk !== null && p.risk > u.maxSri) return;     // suitability gate
+    used.add(p.key);
+    const x = a.calc ? a.calc(c, s, u) : {};
+    const copyFn = a.copy[u.tone] || Object.values(a.copy)[0];
+    out.push({ action: a, p, x, copy: copyFn(c, s, u, p, x), reasons: a.reasons(c, s, u, p, x) });
+  });
+  return out;
+}
+
+// Why a pathway is NOT suggested right now, derived from the same signals.
+function whyNot(p, c, s, u, recKeys) {
+  if (p.risk !== null && p.risk > u.maxSri) {
+    const extra = p.key === "realestate" && s.products.includes("Mortgage") ? ". Your home already gives you property exposure" : "";
+    return { limit: true, text: `Above your risk limit of ${u.maxSri} of 7${extra}` };
+  }
+  switch (p.key) {
+    case "cash": return { text: `Your savings already cover ${dec(u.buffer)} months of spending` };
+    case "gov":
+    case "corp":
+      if (s.knowledge < 2) return { text: "Bolero bonds suit larger sums and some investing experience" };
+      if (p.key === "corp" && recKeys.includes("gov")) return { text: "Government bonds cover this need with less issuer risk" };
+      return { text: "Your goal is long-term growth rather than income" };
+    case "equity": return { text: "Not a priority right now" };
+    case "realestate": return { text: s.knowledge < 3 ? "Needs more investing experience" : "Not a priority right now" };
+    case "homeins": return { text: s.products.includes("Home insurance") ? "Already covered by your KBC Home Insurance" : "No home of your own in your data yet" };
+    case "loanins": return { text: s.products.includes("Mortgage") ? "Already covered" : "No mortgage in your data" };
+    case "mortgage": return { text: s.products.includes("Mortgage") ? "You already have a KBC Mortgage Loan" : u.buffer < 3 ? "Safety net first; no home-buying signals yet" : "No home-buying signals in your data" };
+  }
+  return { text: "Not a priority right now" };
+}
+
+function pathwayStatus(c, s, u, recs) {
+  const recKeys = recs.map(r => r.p.key);
+  return PATHWAYS.map(p => {
+    const i = recKeys.indexOf(p.key);
+    if (i === 0) return { p, state: "main", text: "Recommended now" };
+    if (i > 0) return { p, state: "on", text: "Also for you" };
+    const w = whyNot(p, c, s, u, recKeys);
+    return { p, state: w.limit ? "limit" : "off", text: w.text };
+  });
+}
+
+/* =====================================================================
+   4. USER INTERFACE
+   ===================================================================== */
+const SCENES = ["scene-intro", "scene-lock", "scene-app", "scene-app"];
+const state = { scene: 0, idx: 0, personal: true, pulse: false };
+const $ = id => document.getElementById(id);
+const phone = $("app-phone");
+let notifTimers = [];
+
+const model = i => {
+  const c = CUSTOMERS[i];
+  const s = c.event.apply(c.signals);
+  const u = understand(c, s, c.event.id);
+  const recs = recommend(c, s, u);
+  return { c, s, u, recs, status: pathwayStatus(c, s, u, recs) };
+};
+
+const pwChip = p => `<span class="pw" style="--pc:${p.color}"><b>${p.n}</b>${esc(p.name)}</span>`;
+const stripHTML = status => `<div class="strip" aria-label="Kate's 8 pathways">${status.map(x =>
+  `<i class="${x.state === "main" ? "on main" : x.state === "on" ? "on" : ""}" style="--pc:${x.p.color}" title="${esc(x.p.name)}">${x.p.n}</i>`).join("")}</div>`;
+
+/* ---------- stage 2: lock screens ---------- */
+function buildLockScreens() {
+  $("scene-lock").innerHTML = `<div class="lock-row">` + CUSTOMERS.map((c, i) => {
+    const { u, recs, status } = model(i);
+    return `<div class="lock-col">
+      <div class="lock-wrap"><div class="phone lock wall-${esc(c.id)}">
+        <div class="island"></div>
+        <div class="status"><span></span><span>${STATUS_ICONS}</span></div>
+        <div class="lock-date">${esc(c.lock.date)}</div>
+        <div class="lock-time">${esc(c.lock.clock)}</div>
+        <button class="notif" type="button" data-open="${i}" aria-label="Open Kate's message for ${esc(c.first)}">
+          <span class="app-ico">${icon("spark", 22)}</span>
+          <span class="n-main"><span class="n-head"><span class="n-title">Kate</span><span class="n-time">${esc(c.lock.time)}</span></span>
+          <span class="n-body" style="display:block">${esc(c.lock.body)}</span></span>
+        </button>
+        <span class="lk-btn" style="left:46px">${icon("torch", 20)}</span>
+        <span class="lk-btn" style="right:46px">${icon("camera", 20)}</span>
+        <div class="homebar"></div>
+      </div></div>
+      <div class="lock-label"><b>${esc(c.first)}, ${c.age}</b><span class="ll-sub">${esc(TONES[u.tone].label)} voice, ${esc(EVENT_MOMENT[c.event.id].split(",")[0].toLowerCase())}</span>
+        <div class="pw-area">${stripHTML(status)}<div class="chips">${recs.map(r => pwChip(r.p)).join("")}</div></div>
+      </div>
+    </div>`;
+  }).join("") + `</div>`;
+}
+
+function playNotifications() {
+  notifTimers.forEach(clearTimeout);
+  notifTimers = [];
+  const cols = document.querySelectorAll(".lock-col");
+  cols.forEach(col => { col.classList.remove("shown"); col.querySelector(".notif").classList.remove("show"); });
+  cols.forEach((col, i) => notifTimers.push(setTimeout(() => {
+    col.querySelector(".notif").classList.add("show");
+    col.classList.add("shown");
+  }, 500 + i * 700)));
+}
+
+/* ---------- stages 3 and 4: the app ---------- */
+function homeHTML(c, s, u, recs) {
+  const accts = [["Current account", s.balance, "wallet"], ["Savings account", s.savings, "piggy"]];
+  if (s.invested) accts.push(["Investments", s.invested, "trend"]);
+  const r = recs[0];
+
+  const kateCard = state.personal
+    ? `<button class="k-card kate${state.pulse ? " pulse" : ""}" type="button" data-act="open-rec">
+        <span class="ico">${icon(r.action.icon || r.p.icon, 28)}</span>
+        <span class="k-txt">
+          <span class="k-lbl"><span class="kate-dot">${icon("spark", 11)}</span>Kate, just for you</span>
+          ${pwChip(r.p)}
+          <span class="k-title">${esc(r.copy.title)}</span>
+          <span class="k-teaser">${esc(r.copy.body.split(/(?<=[.!?])\s/)[0])}</span>
+          <span class="k-more">See Kate's suggestion ${icon("right", 16, 2)}</span>
+        </span>
+        <span class="x" aria-hidden="true">✕</span>
+      </button>`
+    : `<button class="k-card" type="button" data-act="open-rec">
+        <span class="ico">${icon("layers", 28)}</span>
+        <span class="k-txt"><p>Discover the KBC range of savings, investments, insurance and loans.</p></span>
+        <span class="x" aria-hidden="true">✕</span>
+      </button>`;
+
+  const more = !state.personal ? "" : recs.slice(1).map(x =>
+      `<div class="k-card"><span class="ico">${icon(x.action.icon || x.p.icon, 26)}</span><span class="k-txt">${pwChip(x.p)}<span class="k-title">${esc(x.copy.title)}</span><p style="margin-top:4px">${esc(x.copy.body.split(/(?<=[.!?])\s/)[0])}</p></span><span class="x" aria-hidden="true">✕</span></div>`).join("")
+    + (recs.length < 2 && c.extra ? `<div class="k-card"><span class="ico">${icon(c.extra.icon, 26)}</span><span class="k-txt"><span class="k-title">${esc(c.extra.title)}</span><p style="margin-top:4px">${esc(c.extra.body)}</p></span><span class="x" aria-hidden="true">✕</span></div>` : "");
+
+  return `
+    <div class="k-top">
+      <span class="k-circ">${icon("gear", 22)}</span>
+      <span class="k-search">${icon("search", 18)}<span class="ph">How can I help you?</span><span class="kate-badge"><span class="kate-dot">${icon("spark", 11)}</span>Kate</span></span>
+      <span class="k-circ">${icon("bell", 22)}<i class="red"></i></span>
+    </div>
+    <div class="k-chips">
+      <span class="chip on">${icon("wallet", 20)}</span>
+      <span class="chip">${icon("home", 18)}MyHome</span>
+      <span class="chip">${icon("sign", 18)}MyMobility</span>
+    </div>
+    <div class="k-accts">${accts.map(([name, amt, ic]) => `<div class="acc"><div class="acc-top">${icon(ic, 44, 1.6)}</div><div class="acc-bot"><div class="acc-name">${esc(name)}</div><div class="acc-amt">${esc(bal(amt))}</div></div></div>`).join("")}</div>
+    <div class="show-pay">${icon("down", 18, 2)}Show payments</div>
+    <div class="k-sec"><h2>For you</h2><span>All communications</span></div>
+    ${kateCard}
+    ${more}
+    <div class="k-card"><span class="ico">${icon("mail", 26)}</span><span class="k-txt"><span class="k-lbl"><span class="kate-dot">${icon("spark", 11)}</span>Kate wants you to know</span><p>KBC will never ask for your card reader codes by phone, text or WhatsApp. If someone does, hang up.</p></span><span class="x" aria-hidden="true">✕</span></div>`;
+}
+
+function signalRows(c, s, u) {
+  const yrs = s.incomeMonths >= 24 ? `${Math.floor(s.incomeMonths / 12)} years` : `${s.incomeMonths} months`;
+  const rows = [
+    ["Income", `${euros(s.income)} a month, steady for ${yrs}`],
+    ["Spending", `${euros(s.expenses)} a month`],
+    ["Savings", `${euros(s.savings)}, ${dec(u.buffer)} months of spending`],
+    ["Investments", s.invested ? `${euros(s.invested)}, risk ${s.portfolioSri} of 7` : "None yet"],
+    ["Products", s.products.filter(x => x !== "Current account").join(", ") || "Current account only"],
+    ["App use", `${s.appSessionsWk} times a week, about ${s.avgSessionSec} s a visit`],
+    ["Risk questionnaire", QLABEL[s.questionnaire]]
+  ];
+  if (s.readsMarketNews) rows.push(["Reading", "Market news, most mornings"]);
+  if (s.prefersAdvisor) rows.push(["Contact preference", "Phone and branch"]);
+  s.events.forEach(e => {
+    const row = [EVENT_INFO[e].label, EVENT_INFO[e].detail, e === c.event.id];
+    if (e === c.event.id) rows.unshift(row); else rows.push(row);
+  });
+  return rows.map(([k, v, n]) => `<div class="kv${n ? " new" : ""}"><span>${esc(k)}${n ? '<b class="tag">New</b>' : ""}</span><span>${esc(v)}</span></div>`).join("");
+}
+
+function pathwayListHTML(status) {
+  return status.map(x => `<div class="pw-row ${x.state}" style="--pc:${x.p.color}">
+      <span class="pw-n">${x.p.n}</span>
+      <span class="pw-main"><span class="pw-name">${esc(x.p.name)}</span>
+        <span class="pw-st">${esc(x.text)}</span>
+        ${x.state === "main" || x.state === "on" ? `<span class="pw-keep">${esc(x.p.product)}. Keep in mind: ${esc(x.p.boundary)}</span>` : ""}
+      </span></div>`).join("");
+}
+
+const toggleRow = () => `<div class="toggle-row"><b>Personalised suggestions</b><button class="toggle" type="button" role="switch" aria-checked="${state.personal}" aria-label="Personalised suggestions" data-act="personal"></button></div>`;
+
+function recHTML(c, s, u, recs, status) {
+  const head = `<div class="r-head"><button class="r-back" type="button" data-act="back" aria-label="Back">${icon("back", 22, 2)}</button><h1>For you</h1></div>`;
+  if (!state.personal) {
+    return `${head}
+      <div class="r-title">Personalised suggestions are off</div>
+      <p class="r-body">Everyone sees the same general offers, and your data is not used to choose them. You can switch this back on at any time.</p>
+      <div class="r-sec"><div class="r-box">${toggleRow()}</div></div>`;
+  }
+  const r = recs[0], k = r.copy, p = r.p;
+  const figs = k.figs ? `<div class="r-figs">${k.figs.map(f => `<div class="r-fig"><b>${esc(f[0])}</b><span>${esc(f[1])}</span></div>`).join("")}</div>` : "";
+  const scale = p.risk
+    ? `<div class="sri" aria-label="Indicative risk ${p.risk} of 7">${[1, 2, 3, 4, 5, 6, 7].map(n => `<i class="${n === p.risk ? "cur" : n <= u.maxSri ? "fill" : ""}">${n}</i>`).join("")}</div>
+       <p class="sri-cap">Indicative risk ${p.risk} of 7. Highlighted: your personal limit, up to ${u.maxSri}.</p>`
+    : `<p class="sri-cap">${esc(p.kind)}, no investment risk scale.</p>`;
+  const portfolioFlag = s.portfolioSri > u.maxSri
+    ? `<div class="kv"><span>Current investments</span><span style="color:var(--warn)">Risk ${s.portfolioSri} of 7, above your limit</span></div>` : "";
+
+  return `${head}
+    <div class="r-hero" style="--pc:${p.color}"><span class="hero-ico">${icon(r.action.icon || p.icon, 72, 1.4)}</span><span class="kate-pill"><span class="kate-dot">${icon("spark", 11)}</span>Kate, just for you</span></div>
+    <div class="r-chip">${pwChip(p)}</div>
+    <div class="r-title">${esc(k.title)}</div>
+    <p class="r-body">${esc(k.body)}</p>
+    ${figs}
+    <div class="r-prod"><div class="r-prod-top"><span>${esc(p.product)}</span><span>${esc(p.kind)}</span></div>${scale}
+      <p class="r-keep">Keep in mind: ${esc(p.boundary)}</p></div>
+    <button class="r-cta" type="button">${esc(k.cta)}</button>
+    <button class="r-cta2" type="button">${icon("spark", 14)} Ask Kate a question</button>
+
+    <div class="r-sec"><h2>Your pathways</h2><p class="fine" style="margin:-4px 0 10px">Kate checks all 8 pathways against your situation and risk limit.</p>
+      <div class="r-box">${pathwayListHTML(status)}</div></div>
+    <div class="r-sec"><h2>Why Kate suggests this</h2><div class="r-box"><ul class="reasons">${r.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
+    <div class="r-sec"><h2>What Kate noticed</h2><div class="r-box">${signalRows(c, s, u)}</div></div>
+    <div class="r-sec"><h2>How this fits you</h2><div class="r-box">
+      <div class="kv"><span>Life stage</span><span>${esc(u.lifeStage)}</span></div>
+      <div class="meter"><div class="kv"><span>Risk capacity</span><span>${u.capacity} of 100</span></div><div class="bar"><i style="width:${Number(u.capacity)}%"></i></div></div>
+      <div class="kv"><span>Risk limit</span><span>Up to ${u.maxSri} of 7</span></div>
+      <div class="meter"><div class="kv"><span>Financial knowledge</span><span>${u.knowledge < 40 ? "Beginner" : u.knowledge < 70 ? "Some experience" : "Experienced"}</span></div><div class="bar"><i style="width:${Number(u.knowledge)}%"></i></div></div>
+      ${portfolioFlag}
+    </div><p class="fine">Your risk limit is the lower of your questionnaire answer and what your finances can absorb.</p></div>
+    <div class="r-sec"><h2>You're in control</h2><div class="r-box">${toggleRow()}</div>
+      <p class="fine">Kate only uses data you already share with KBC, with your consent. Before investing, read the key information document. The value of an investment can go down as well as up.</p></div>`;
+}
+
+function renderCaption(c, u, recs, status) {
+  $("cap-step").textContent = `Customer ${state.idx + 1} of ${CUSTOMERS.length}`;
+  $("cap-name").textContent = `${c.first}, ${c.age}`;
+  $("cap-meta").textContent = `${c.city}. ${c.note}.`;
+  const rows = state.personal
+    ? [["Life stage", u.lifeStage], ["Voice", TONES[u.tone].label, u.toneWhy], ["Moment", u.moment], ["Risk limit", `Up to ${u.maxSri} of 7`]]
+    : [["Life stage", "Not used"], ["Voice", "Same for everyone"], ["Moment", "Not timed"], ["Risk limit", "Not used"]];
+  $("cap-dl").innerHTML = rows.map(([k, v, why]) => `<dt>${esc(k)}</dt><dd>${esc(v)}${why ? `<small>${esc(why)}</small>` : ""}</dd>`).join("");
+  $("cap-pw").innerHTML = state.personal
+    ? `<p class="cap-pw-t">Kate's pathways for ${esc(c.first)}</p>${stripHTML(status)}<div class="chips">${recs.map(r => pwChip(r.p)).join("")}</div>`
+    : `<p class="cap-pw-t">Personalisation off: general offers only</p>`;
+  const info = EVENT_INFO[c.event.id];
+  $("cap-event").textContent = `Trigger: ${info.label.toLowerCase()}, ${info.detail.charAt(0).toLowerCase() + info.detail.slice(1)}`;
+}
+
+function renderApp() {
+  const { c, s, u, recs, status } = model(state.idx);
+  phone.dataset.size = u.tone === "formal" && state.personal ? "large" : "normal";
+  phone.dataset.screen = state.scene === 3 ? "rec" : "home";
+  $("st-time").textContent = c.lock.clock;
+  $("home").innerHTML = homeHTML(c, s, u, recs);
+  $("rec").innerHTML = recHTML(c, s, u, recs, status);
+  renderCaption(c, u, recs, status);
+  state.pulse = false;
+}
+
+function renderControls() {
+  document.querySelectorAll("[data-scene]").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.scene) === state.scene)));
+  document.querySelectorAll("[data-cust]").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.cust) === state.idx)));
+  $("btn-personal").setAttribute("aria-pressed", String(state.personal));
+}
+
+/* ---------- navigation ---------- */
+function setScene(i) {
+  const prev = state.scene;
+  state.scene = Math.max(0, Math.min(SCENES.length - 1, i));
+  document.querySelectorAll(".scene").forEach(el => el.classList.toggle("active", el.id === SCENES[state.scene]));
+  if (state.scene === 1) playNotifications();
+  if (state.scene >= 2) {
+    if (prev < 2) { $("home").scrollTop = 0; }
+    if (state.scene === 3 && prev !== 3) $("rec").scrollTop = 0;
+    renderApp();
+  }
+  renderControls();
+}
+
+function openCustomer(i, fromNotification) {
+  state.idx = i;
+  state.pulse = !!fromNotification;
+  $("home").scrollTop = 0;
+  $("rec").scrollTop = 0;
+  setScene(state.scene >= 2 ? state.scene : 2);
+}
+
+function togglePersonal() { state.personal = !state.personal; if (state.scene >= 2) renderApp(); renderControls(); }
+
+function fit() {
+  const top = document.body.classList.contains("no-controls") ? 0 : 52;
+  const H = window.innerHeight - top, W = window.innerWidth;
+  document.documentElement.style.setProperty("--s", clamp((H - 56) / 844, 0.5, 1).toFixed(3));
+  document.documentElement.style.setProperty("--s4", clamp(Math.min((H - 250) / 844, (W - 130 - 3 * 36) / (4 * 390)), 0.3, 1).toFixed(3));
+}
+
+/* ---------- wiring ---------- */
+CUSTOMERS.forEach((c, i) => {
+  const b = document.createElement("button");
+  b.className = "ctl"; b.type = "button"; b.dataset.cust = String(i);
+  b.textContent = `${i + 1} ${c.first}`;
+  b.addEventListener("click", () => openCustomer(i, state.scene < 2));
+  $("ctl-customers").appendChild(b);
+});
+document.querySelectorAll("[data-scene]").forEach(b => b.addEventListener("click", () => setScene(Number(b.dataset.scene))));
+$("btn-replay").addEventListener("click", () => { if (state.scene !== 1) setScene(1); else playNotifications(); });
+$("btn-personal").addEventListener("click", togglePersonal);
+$("scene-lock").addEventListener("click", e => {
+  const n = e.target.closest("[data-open]");
+  if (n) openCustomer(Number(n.dataset.open), true);
+});
+phone.addEventListener("click", e => {
+  const t = e.target.closest("[data-act]");
+  if (!t) return;
+  const a = t.dataset.act;
+  if (a === "open-rec") setScene(3);
+  else if (a === "back") setScene(2);
+  else if (a === "personal") togglePersonal();
+});
+document.addEventListener("keydown", e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k >= "1" && k <= String(CUSTOMERS.length)) openCustomer(Number(k) - 1, state.scene < 2);
+  else if (k === "arrowright") setScene(state.scene + 1);
+  else if (k === "arrowleft") setScene(state.scene - 1);
+  else if (k === "enter" && state.scene === 2) setScene(3);
+  else if ((k === "escape" || k === "backspace") && state.scene === 3) setScene(2);
+  else if (k === "r") { if (state.scene !== 1) setScene(1); else playNotifications(); }
+  else if (k === "p") togglePersonal();
+  else if (k === "h") { document.body.classList.toggle("no-controls"); fit(); }
+});
+window.addEventListener("resize", fit);
+
+$("st-icons").innerHTML = STATUS_ICONS;
+$("fab").innerHTML = icon("swap", 28, 2);
+$("k-nav").innerHTML = [["Start", "wallet", true], ["My KBC", "list"], ["Investments", "piggy"], ["Offer", "layers"]]
+  .map(([t, ic, on]) => `<span class="${on ? "on" : ""}">${icon(ic, 22)}${esc(t)}</span>`).join("");
+$("team-intro").textContent = `${TEAM_NAME}, Tectonic Hackathon 2026, KBC challenge`;
+buildLockScreens();
+fit();
+renderApp();
+setScene(0);
+</script>
+</body>
+</html>
